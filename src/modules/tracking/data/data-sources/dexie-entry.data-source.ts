@@ -9,6 +9,11 @@ export class DexieEntryDataSource {
     this.table = table
   }
 
+  async findAll(): Promise<Entry[]> {
+    const records = await this.table.toArray()
+    return records.map(toEntry)
+  }
+
   async findByHabitAndDate(habitId: string, date: string): Promise<Entry | null> {
     const record = await this.table.where('[habitId+date]').equals([habitId, date]).first()
     return record ? toEntry(record) : null

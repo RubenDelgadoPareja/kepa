@@ -9,6 +9,10 @@ export class EntryRepositoryImpl implements EntryRepository {
     this.dataSource = dataSource
   }
 
+  findAll(): Promise<Entry[]> {
+    return this.dataSource.findAll()
+  }
+
   findByHabitAndDate(habitId: string, date: string): Promise<Entry | null> {
     return this.dataSource.findByHabitAndDate(habitId, date)
   }

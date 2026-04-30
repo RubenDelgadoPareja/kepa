@@ -4,6 +4,10 @@ import type { EntryRepository } from '@/modules/tracking/domain/repositories/ent
 export class InMemoryEntryRepository implements EntryRepository {
   private readonly entries: Map<string, Entry> = new Map()
 
+  async findAll(): Promise<Entry[]> {
+    return Array.from(this.entries.values())
+  }
+
   async findByHabitAndDate(habitId: string, date: string): Promise<Entry | null> {
     for (const entry of this.entries.values()) {
       if (entry.habitId === habitId && entry.date === date) return entry
