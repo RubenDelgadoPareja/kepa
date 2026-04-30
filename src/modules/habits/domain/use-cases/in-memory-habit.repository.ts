@@ -2,7 +2,7 @@ import type { Habit } from '@/modules/habits/domain/entities/habit.entity'
 import type { HabitRepository } from '@/modules/habits/domain/repositories/habit.repository'
 
 export class InMemoryHabitRepository implements HabitRepository {
-  private habits: Map<string, Habit> = new Map()
+  private readonly habits: Map<string, Habit> = new Map()
 
   async findAll(): Promise<Habit[]> {
     return Array.from(this.habits.values())

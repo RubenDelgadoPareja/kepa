@@ -6,7 +6,11 @@ export interface ListHabitsInput {
 }
 
 export class ListHabitsUseCase {
-  constructor(private readonly repository: HabitRepository) {}
+  private readonly repository: HabitRepository
+
+  constructor(repository: HabitRepository) {
+    this.repository = repository
+  }
 
   async execute(input: ListHabitsInput = {}): Promise<Habit[]> {
     const habits = await this.repository.findAll()

@@ -13,7 +13,11 @@ export interface CreateHabitInput {
 }
 
 export class CreateHabitUseCase {
-  constructor(private readonly repository: HabitRepository) {}
+  private readonly repository: HabitRepository
+
+  constructor(repository: HabitRepository) {
+    this.repository = repository
+  }
 
   async execute(input: CreateHabitInput): Promise<Habit> {
     const habit = new Habit({

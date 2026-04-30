@@ -12,7 +12,11 @@ export interface EditHabitInput {
 }
 
 export class EditHabitUseCase {
-  constructor(private readonly repository: HabitRepository) {}
+  private readonly repository: HabitRepository
+
+  constructor(repository: HabitRepository) {
+    this.repository = repository
+  }
 
   async execute(input: EditHabitInput): Promise<Habit> {
     const { id, ...changes } = input
