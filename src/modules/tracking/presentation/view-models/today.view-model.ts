@@ -85,7 +85,11 @@ export class TodayViewModel extends BaseViewModel {
   }
 
   async setValue(habit: Habit, value: number) {
-    await this.setEntryUseCase.execute({ habitId: habit.id, date: this.date, value, habitKind: habit.kind })
+    if (value <= 0) {
+      await this.clearEntryUseCase.execute(habit.id, this.date)
+    } else {
+      await this.setEntryUseCase.execute({ habitId: habit.id, date: this.date, value, habitKind: habit.kind })
+    }
     await this.load()
   }
 }

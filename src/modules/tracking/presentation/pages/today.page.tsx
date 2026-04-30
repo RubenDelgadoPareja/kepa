@@ -1,5 +1,4 @@
 import { observer } from 'mobx-react-lite'
-import { useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useViewModel } from '@/core/presentation/hooks/useViewModel'
@@ -127,6 +126,13 @@ export function BinaryHabitRow({
   )
 }
 
+const UNIT_STEP: Record<string, number> = { km: 0.5, minutes: 5, reps: 1 }
+
+function formatValue(value: number, unit: string | null): string {
+  if (unit === 'km') return value % 1 === 0 ? String(value) : value.toFixed(1)
+  return String(value)
+}
+
 export function QuantitativeHabitRow({
   habit,
   entry,
@@ -136,22 +142,9 @@ export function QuantitativeHabitRow({
   entry: Entry | null
   onSetValue: (value: number) => void
 }) {
-  const currentValue = typeof entry?.value === 'number' ? entry.value : 0
-  const [inputValue, setInputValue] = useState(String(currentValue || ''))
+  const value = typeof entry?.value === 'number' ? entry.value : 0
+  const step = UNIT_STEP[habit.unit ?? 'reps']
   const done = entry !== null
-
-  function handleBlur() {
-    const parsed = parseFloat(inputValue)
-    if (!isNaN(parsed) && parsed > 0) {
-      onSetValue(parsed)
-    } else {
-      setInputValue(String(currentValue || ''))
-    }
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') e.currentTarget.blur()
-  }
 
   return (
     <li
@@ -160,22 +153,34 @@ export function QuantitativeHabitRow({
       }`}
     >
       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
-      <span className={`flex-1 text-sm font-medium ${done ? 'text-slate-400' : 'text-slate-100'}`}>
+      <span className={`flex-1 text-sm font-medium ${done ? 'text-slate-300' : 'text-slate-100'}`}>
         {habit.name}
       </span>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          min={0.1}
-          step={0.1}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          placeholder="0"
-          className="w-16 px-2 py-1 rounded-md bg-slate-900 border border-slate-700 text-slate-100 text-sm text-right focus:outline-none focus:border-indigo-500"
-        />
-        <span className="text-xs text-slate-500 w-12">{habit.unit}</span>
+
+      <div className="flex items-center rounded-lg border border-slate-700 overflow-hidden">
+        <button
+          onClick={() => onSetValue(Math.round((value - step) * 10) / 10)}
+          disabled={value === 0}
+          className="px-3 py-2 text-lg leading-none text-slate-400 hover:text-slate-100 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none"
+        >
+          −
+        </button>
+        <div className="px-4 py-2 bg-slate-900 min-w-[5.5rem] text-center">
+          {done ? (
+            <span className="text-sm font-semibold text-slate-100">
+              {formatValue(value, habit.unit)}{' '}
+              <span className="text-xs font-normal text-slate-500">{habit.unit}</span>
+            </span>
+          ) : (
+            <span className="text-sm text-slate-600">— {habit.unit}</span>
+          )}
+        </div>
+        <button
+          onClick={() => onSetValue(Math.round((value + step) * 10) / 10)}
+          className="px-3 py-2 text-lg leading-none text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors select-none"
+        >
+          +
+        </button>
       </div>
     </li>
   )
