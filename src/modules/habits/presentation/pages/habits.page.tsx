@@ -9,30 +9,59 @@ import { HabitsListViewModel } from '../view-models/habits-list.view-model'
 export const HabitsPage = observer(function HabitsPage() {
   const vm = useViewModel(() => {
     const deps = createHabitDependencies()
-    return new HabitsListViewModel(deps.listHabits, deps.createHabit, deps.archiveHabit)
+    return new HabitsListViewModel(deps.listHabits, deps.createHabit, deps.archiveHabit, deps.editHabit)
   })
 
-  const [showForm, setShowForm] = useState(false)
+  const [formMode, setFormMode] = useState<null | 'create' | Habit>(null)
+
+  function openCreate() {
+    setFormMode('create')
+  }
+
+  function openEdit(habit: Habit) {
+    setFormMode(habit)
+  }
+
+  function closeForm() {
+    setFormMode(null)
+  }
+
+  async function handleCreate(input: CreateHabitInput) {
+    await vm.create(input)
+    closeForm()
+  }
+
+  async function handleEdit(habit: Habit, input: CreateHabitInput) {
+    await vm.edit({
+      id: habit.id,
+      name: input.name,
+      unit: input.unit,
+      color: input.color,
+      frequency: input.frequency,
+    })
+    closeForm()
+  }
+
+  const isFormOpen = formMode !== null
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-semibold text-slate-100">Hábitos</h1>
         <button
-          onClick={() => setShowForm((v) => !v)}
+          onClick={isFormOpen ? closeForm : openCreate}
           className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
         >
-          {showForm ? 'Cancelar' : 'Nuevo hábito'}
+          {isFormOpen ? 'Cancelar' : 'Nuevo hábito'}
         </button>
       </div>
 
-      {showForm && (
-        <NewHabitForm
-          onSubmit={async (input) => {
-            await vm.create(input)
-            setShowForm(false)
-          }}
-        />
+      {formMode === 'create' && (
+        <HabitForm onSubmit={handleCreate} />
+      )}
+
+      {formMode !== null && formMode !== 'create' && (
+        <HabitForm initialValues={formMode} onSubmit={(input) => handleEdit(formMode, input)} />
       )}
 
       {vm.error && (
@@ -46,7 +75,12 @@ export const HabitsPage = observer(function HabitsPage() {
       ) : (
         <ul className="space-y-3">
           {vm.habits.map((habit) => (
-            <HabitCard key={habit.id} habit={habit} onArchive={() => vm.archive(habit.id)} />
+            <HabitCard
+              key={habit.id}
+              habit={habit}
+              onEdit={() => openEdit(habit)}
+              onArchive={() => vm.archive(habit.id)}
+            />
           ))}
         </ul>
       )}
@@ -56,13 +90,26 @@ export const HabitsPage = observer(function HabitsPage() {
 
 const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6']
 
-export function NewHabitForm({ onSubmit }: { onSubmit: (input: CreateHabitInput) => Promise<void> }) {
-  const [name, setName] = useState('')
-  const [kind, setKind] = useState<'binary' | 'quantitative'>('binary')
-  const [unit, setUnit] = useState<'km' | 'minutes' | 'reps'>('reps')
-  const [color, setColor] = useState(COLORS[0])
-  const [frequencyType, setFrequencyType] = useState<'daily' | 'weekly'>('daily')
-  const [timesPerWeek, setTimesPerWeek] = useState(3)
+export function HabitForm({
+  initialValues,
+  onSubmit,
+}: {
+  initialValues?: Habit
+  onSubmit: (input: CreateHabitInput) => Promise<void>
+}) {
+  const isEdit = initialValues !== undefined
+  const [name, setName] = useState(initialValues?.name ?? '')
+  const [kind] = useState<'binary' | 'quantitative'>(initialValues?.kind ?? 'binary')
+  const [unit, setUnit] = useState<'km' | 'minutes' | 'reps'>(
+    (initialValues?.unit as 'km' | 'minutes' | 'reps') ?? 'reps',
+  )
+  const [color, setColor] = useState(initialValues?.color ?? COLORS[0])
+  const [frequencyType, setFrequencyType] = useState<'daily' | 'weekly'>(
+    initialValues?.frequency.type ?? 'daily',
+  )
+  const [timesPerWeek, setTimesPerWeek] = useState(
+    initialValues?.frequency.type === 'weekly' ? initialValues.frequency.timesPerWeek : 3,
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -82,7 +129,7 @@ export function NewHabitForm({ onSubmit }: { onSubmit: (input: CreateHabitInput)
         color,
       })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al crear el hábito')
+      setError(e instanceof Error ? e.message : 'Error al guardar el hábito')
     } finally {
       setIsSubmitting(false)
     }
@@ -93,6 +140,10 @@ export function NewHabitForm({ onSubmit }: { onSubmit: (input: CreateHabitInput)
       onSubmit={handleSubmit}
       className="mb-6 p-5 rounded-xl bg-slate-800 border border-slate-700 space-y-4"
     >
+      <p className="text-sm font-medium text-slate-300">
+        {isEdit ? 'Editar hábito' : 'Nuevo hábito'}
+      </p>
+
       <div>
         <label className="block text-xs font-medium text-slate-400 mb-1">Nombre</label>
         <input
@@ -109,8 +160,8 @@ export function NewHabitForm({ onSubmit }: { onSubmit: (input: CreateHabitInput)
           <label className="block text-xs font-medium text-slate-400 mb-1">Tipo</label>
           <select
             value={kind}
-            onChange={(e) => setKind(e.target.value as 'binary' | 'quantitative')}
-            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-indigo-500"
+            disabled={isEdit}
+            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="binary">Binario (sí / no)</option>
             <option value="quantitative">Cuantitativo</option>
@@ -172,7 +223,11 @@ export function NewHabitForm({ onSubmit }: { onSubmit: (input: CreateHabitInput)
               type="button"
               onClick={() => setColor(c)}
               className="w-7 h-7 rounded-full transition-transform hover:scale-110"
-              style={{ backgroundColor: c, outline: color === c ? `2px solid ${c}` : 'none', outlineOffset: '2px' }}
+              style={{
+                backgroundColor: c,
+                outline: color === c ? `2px solid ${c}` : 'none',
+                outlineOffset: '2px',
+              }}
             />
           ))}
         </div>
@@ -185,13 +240,21 @@ export function NewHabitForm({ onSubmit }: { onSubmit: (input: CreateHabitInput)
         disabled={isSubmitting}
         className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
       >
-        {isSubmitting ? 'Guardando...' : 'Crear hábito'}
+        {isSubmitting ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear hábito'}
       </button>
     </form>
   )
 }
 
-export function HabitCard({ habit, onArchive }: { habit: Habit; onArchive: () => void }) {
+export function HabitCard({
+  habit,
+  onEdit,
+  onArchive,
+}: {
+  habit: Habit
+  onEdit: () => void
+  onArchive: () => void
+}) {
   const frequencyLabel =
     habit.frequency.type === 'daily'
       ? 'Diario'
@@ -206,6 +269,12 @@ export function HabitCard({ habit, onArchive }: { habit: Habit; onArchive: () =>
           {habit.kind === 'quantitative' ? `Cuantitativo · ${habit.unit}` : 'Binario'} · {frequencyLabel}
         </p>
       </div>
+      <button
+        onClick={onEdit}
+        className="text-xs text-slate-500 hover:text-indigo-400 transition-colors"
+      >
+        Editar
+      </button>
       <button
         onClick={onArchive}
         className="text-xs text-slate-500 hover:text-red-400 transition-colors"

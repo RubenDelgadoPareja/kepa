@@ -3,6 +3,7 @@ import { BaseViewModel } from '@/core/presentation/view-models/base/base.view-mo
 import type { Habit } from '@/modules/habits/domain/entities/habit.entity'
 import type { ArchiveHabitUseCase } from '@/modules/habits/domain/use-cases/archive-habit.use-case'
 import type { CreateHabitInput, CreateHabitUseCase } from '@/modules/habits/domain/use-cases/create-habit.use-case'
+import type { EditHabitInput, EditHabitUseCase } from '@/modules/habits/domain/use-cases/edit-habit.use-case'
 import type { ListHabitsUseCase } from '@/modules/habits/domain/use-cases/list-habits.use-case'
 
 export class HabitsListViewModel extends BaseViewModel {
@@ -13,16 +14,19 @@ export class HabitsListViewModel extends BaseViewModel {
   private readonly listHabitsUseCase: ListHabitsUseCase
   private readonly createHabitUseCase: CreateHabitUseCase
   private readonly archiveHabitUseCase: ArchiveHabitUseCase
+  private readonly editHabitUseCase: EditHabitUseCase
 
   constructor(
     listHabitsUseCase: ListHabitsUseCase,
     createHabitUseCase: CreateHabitUseCase,
     archiveHabitUseCase: ArchiveHabitUseCase,
+    editHabitUseCase: EditHabitUseCase,
   ) {
     super()
     this.listHabitsUseCase = listHabitsUseCase
     this.createHabitUseCase = createHabitUseCase
     this.archiveHabitUseCase = archiveHabitUseCase
+    this.editHabitUseCase = editHabitUseCase
     makeObservable(this, {
       habits: observable,
       isLoading: observable,
@@ -60,6 +64,11 @@ export class HabitsListViewModel extends BaseViewModel {
 
   async archive(habitId: string) {
     await this.archiveHabitUseCase.execute(habitId)
+    await this.load()
+  }
+
+  async edit(input: EditHabitInput) {
+    await this.editHabitUseCase.execute(input)
     await this.load()
   }
 }
