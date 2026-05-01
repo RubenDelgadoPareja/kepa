@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite'
-import { format, subWeeks, startOfWeek, eachDayOfInterval } from 'date-fns'
+import { format, subMonths, startOfWeek, eachDayOfInterval } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useViewModel } from '@/core/presentation/hooks/useViewModel'
 import { createStatsDependencies } from '@/modules/stats/stats.wiring'
@@ -8,8 +8,6 @@ import type { Entry } from '@/modules/tracking/domain/entities/entry.entity'
 import type { HabitStats } from '@/modules/stats/domain/use-cases/calculate-habit-stats'
 import { StatsViewModel } from '../view-models/stats.view-model'
 
-const WEEKS = 26
-
 export const StatsPage = observer(function StatsPage() {
   const vm = useViewModel(() => {
     const deps = createStatsDependencies()
@@ -17,13 +15,13 @@ export const StatsPage = observer(function StatsPage() {
   })
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold text-slate-100 mb-8">Estadísticas</h1>
+    <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8 md:py-12">
+      <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight mb-8">Estadísticas</h1>
 
       {vm.isLoading ? (
-        <p className="text-slate-500 text-sm">Cargando...</p>
+        <LoadingSkeleton />
       ) : vm.items.length === 0 ? (
-        <p className="text-slate-500 text-sm">Crea hábitos y empieza a registrar para ver estadísticas.</p>
+        <p className="text-slate-500 dark:text-slate-500 text-sm">Crea hábitos y empieza a registrar para ver estadísticas.</p>
       ) : (
         <ul className="space-y-6">
           {vm.items.map(({ habit, entries, stats }) => (
@@ -47,10 +45,10 @@ export function HabitStatCard({
   today: string
 }) {
   return (
-    <li className="p-5 rounded-xl bg-slate-800 border border-slate-700 space-y-5">
+    <li className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none space-y-5">
       <div className="flex items-center gap-3">
         <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
-        <span className="text-base font-semibold text-slate-100">{habit.name}</span>
+        <span className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">{habit.name}</span>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -76,11 +74,14 @@ export function StatBadge({
   color?: string
 }) {
   return (
-    <div className="rounded-lg bg-slate-900 px-3 py-3">
-      <p className="text-xs text-slate-500 mb-1">{label}</p>
-      <p className="text-xl font-bold" style={color ? { color } : { color: '#94a3b8' }}>
-        {value}
-        <span className="text-xs font-normal text-slate-500 ml-0.5">{unit}</span>
+    <div className="rounded-2xl bg-slate-50 dark:bg-slate-900 px-3 py-3">
+      <p className="text-xs text-slate-500 dark:text-slate-500 mb-1">{label}</p>
+      <p
+        className="text-2xl font-bold tracking-tight"
+        style={color ? { color } : undefined}
+      >
+        <span className={!color ? 'text-slate-500 dark:text-slate-400' : ''}>{value}</span>
+        <span className="text-xs font-normal text-slate-400 dark:text-slate-500 ml-0.5">{unit}</span>
       </p>
     </div>
   )
@@ -98,7 +99,7 @@ export function HabitCalendar({
   const completedDates = new Set(entries.map((e) => e.date))
 
   const endDate = new Date(today + 'T00:00:00')
-  const startDate = startOfWeek(subWeeks(endDate, WEEKS - 1), { weekStartsOn: 1 })
+  const startDate = startOfWeek(subMonths(endDate, 3), { weekStartsOn: 1 })
   const allDays = eachDayOfInterval({ start: startDate, end: endDate })
 
   const weeks: Date[][] = []
@@ -106,49 +107,55 @@ export function HabitCalendar({
     weeks.push(allDays.slice(i, i + 7))
   }
 
-  const monthLabels = buildMonthLabels(weeks)
+  const monthLabels = weeks.map((week, i) => {
+    const month = week[0].getMonth()
+    const prevMonth = i > 0 ? weeks[i - 1][0].getMonth() : -1
+    return month !== prevMonth ? format(week[0], 'MMM', { locale: es }) : ''
+  })
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex gap-0.5 pl-7">
-        {monthLabels.map(({ label, weekIndex }) => (
+    <div className="rounded-lg bg-slate-100 dark:bg-slate-950 p-3 space-y-1">
+      {/* Fila de etiquetas de mes — flex-1 por columna, alineado con el grid */}
+      <div className="flex gap-1">
+        <div className="w-5 flex-shrink-0" />
+        {monthLabels.map((label, wi) => (
           <div
-            key={weekIndex}
-            className="text-[10px] text-slate-600"
-            style={{ width: `${(1 / weeks.length) * 100}%` }}
+            key={wi}
+            className="flex-1 min-w-0 overflow-visible whitespace-nowrap text-[10px] text-slate-400 dark:text-slate-500"
           >
             {label}
           </div>
         ))}
       </div>
 
-      <div className="flex gap-0.5">
-        <div className="flex flex-col justify-between pr-1.5" style={{ gap: '2px' }}>
-          {['L', 'X', 'V'].map((d) => (
-            <span key={d} className="text-[10px] text-slate-600 leading-none" style={{ height: '10px', lineHeight: '10px' }}>
+      {/* Grid principal */}
+      <div className="flex gap-1">
+        {/* Columna de días de la semana */}
+        <div className="w-5 flex-shrink-0 flex flex-col gap-1">
+          {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d) => (
+            <div
+              key={d}
+              className="flex-1 flex items-center justify-center text-[10px] text-slate-400 dark:text-slate-500 leading-none"
+            >
               {d}
-            </span>
+            </div>
           ))}
         </div>
 
+        {/* Columnas de semanas — flex-1 para repartir todo el ancho */}
         {weeks.map((week, wi) => (
-          <div key={wi} className="flex flex-col gap-0.5">
+          <div key={wi} className="flex-1 min-w-0 flex flex-col gap-1">
             {week.map((day, di) => {
               const dateStr = format(day, 'yyyy-MM-dd')
               const done = completedDates.has(dateStr)
-              const isFuture = dateStr > today
               return (
                 <div
                   key={di}
                   title={format(day, 'd MMM yyyy', { locale: es })}
-                  className="w-2.5 h-2.5 rounded-sm transition-colors"
-                  style={{
-                    backgroundColor: isFuture
-                      ? 'transparent'
-                      : done
-                        ? color
-                        : '#1e293b',
-                  }}
+                  className={`aspect-square rounded-sm transition-colors ${
+                    done ? '' : 'bg-slate-300 dark:bg-slate-800'
+                  }`}
+                  style={done ? { backgroundColor: color } : undefined}
                 />
               )
             })}
@@ -159,21 +166,12 @@ export function HabitCalendar({
   )
 }
 
-function buildMonthLabels(weeks: Date[][]): { label: string; weekIndex: number }[] {
-  const labels: { label: string; weekIndex: number }[] = []
-  let lastMonth = -1
-  weeks.forEach((week, i) => {
-    const month = week[0].getMonth()
-    if (month !== lastMonth) {
-      labels.push({
-        label: format(week[0], 'MMM', { locale: es }),
-        weekIndex: i,
-      })
-      lastMonth = month
-    } else {
-      labels.push({ label: '', weekIndex: i })
-    }
-  })
-  return labels
+function LoadingSkeleton() {
+  return (
+    <ul className="space-y-6">
+      {[1, 2].map((i) => (
+        <li key={i} className="h-48 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 animate-pulse" />
+      ))}
+    </ul>
+  )
 }
-
