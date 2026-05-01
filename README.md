@@ -1,73 +1,97 @@
-# React + TypeScript + Vite
+# kepa
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Keep up.** Habit tracker local-first con buen diseño visual.
 
-Currently, two official plugins are available:
+> Proyecto de portfolio — offline-first, sin login, sin servidor.  
+> Datos guardados en IndexedDB directamente en el navegador.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Demo: [kepa-lyart.vercel.app](https://kepa-lyart.vercel.app)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Características
 
-## Expanding the ESLint configuration
+- Hábitos **binarios** (hecho / no hecho) y **cuantitativos** (km, minutos, reps)
+- Frecuencia **diaria** o **semanal** (N veces por semana)
+- Meta opcional por hábito (valor + periodo)
+- **Categorías** con color personalizable
+- Soft delete: los hábitos se archivan, no se borran
+- **Estadísticas**: racha actual, tasa de completado, calendario tipo GitHub
+- Modo día / noche
+- 100 % offline — sin cuenta, sin API externa
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Capa | Tecnología |
+|---|---|
+| UI | React 19 + TypeScript 6 |
+| Estilos | Tailwind CSS v4 |
+| Estado | MobX 6 + mobx-react-lite |
+| Persistencia | Dexie.js (IndexedDB) |
+| Visualización | D3.js |
+| Routing | React Router DOM 7 |
+| Build | Vite 8 |
+| Tests | Vitest 4 + Testing Library + jsdom |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Arquitectura
+
+Módulos independientes con **Clean Architecture**. Cada módulo sigue la misma estructura:
+
+```
+src/
+├── core/                        # Código compartido entre módulos
+│   └── presentation/
+│       ├── hooks/               # useViewModel, useDidMount, useWillUnmount
+│       └── view-models/base/    # BaseViewModel (MobX)
+│
+└── modules/
+    ├── habits/
+    │   ├── domain/              # Entidades, repositorios (interfaz), use cases
+    │   ├── data/                # Implementaciones Dexie (data sources + repos)
+    │   └── presentation/        # Pages, ViewModels, Components
+    ├── tracking/                # Registro diario de entradas
+    ├── stats/                   # Rachas, tasa de completado, calendario
+    └── categories/              # Categorías con color
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**Regla de dependencia:** `domain/` no importa nada externo. La DI es manual por constructores, sin contenedor IoC.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**Patrón ViewModel:** clases que extienden `BaseViewModel`, estado reactivo con MobX, conectadas a la vista con `useViewModel`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Inicio rápido
+
+```bash
+npm install
+npm run dev
 ```
+
+La app abre en `http://localhost:5173`.
+
+---
+
+## Scripts
+
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run preview` | Previsualizar el build |
+| `npm test` | Tests en modo watch |
+| `npm run test:run` | Tests una sola vez |
+| `npm run test:coverage` | Cobertura de tests |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier |
+
+---
+
+## Convenciones
+
+- **Archivos:** dot.case — `habit.entity.ts`, `create-habit.use-case.ts`, `habit.repository.impl.ts`
+- **Tests:** `nombre.tipo.test.ts` junto al fichero que testean
+- **Commits:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`)
