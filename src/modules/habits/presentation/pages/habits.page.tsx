@@ -4,12 +4,13 @@ import { useViewModel } from '@/core/presentation/hooks/useViewModel'
 import { createHabitDependencies } from '@/modules/habits/habits.wiring'
 import type { CreateHabitInput } from '@/modules/habits/domain/use-cases/create-habit.use-case'
 import type { Habit } from '@/modules/habits/domain/entities/habit.entity'
+import type { Category } from '@/modules/categories/domain/entities/category.entity'
 import { HabitsListViewModel } from '../view-models/habits-list.view-model'
 
 export const HabitsPage = observer(function HabitsPage() {
   const vm = useViewModel(() => {
     const deps = createHabitDependencies()
-    return new HabitsListViewModel(deps.listHabits, deps.createHabit, deps.archiveHabit, deps.editHabit)
+    return new HabitsListViewModel(deps.listHabits, deps.createHabit, deps.archiveHabit, deps.editHabit, deps.listCategories)
   })
 
   const [formMode, setFormMode] = useState<null | 'create' | Habit>(null)
@@ -24,10 +25,18 @@ export const HabitsPage = observer(function HabitsPage() {
   }
 
   async function handleEdit(habit: Habit, input: CreateHabitInput) {
-    await vm.edit({ id: habit.id, name: input.name, unit: input.unit, color: input.color, frequency: input.frequency })
+    await vm.edit({
+      id: habit.id,
+      name: input.name,
+      unit: input.unit,
+      color: input.color,
+      frequency: input.frequency,
+      categoryId: input.categoryId,
+    })
     closeForm()
   }
 
+  const categoryMap = new Map(vm.categories.map((c) => [c.id, c]))
   const isFormOpen = formMode !== null
 
   return (
@@ -42,9 +51,15 @@ export const HabitsPage = observer(function HabitsPage() {
         </button>
       </div>
 
-      {formMode === 'create' && <HabitForm onSubmit={handleCreate} />}
+      {formMode === 'create' && (
+        <HabitForm categories={vm.categories} onSubmit={handleCreate} />
+      )}
       {formMode !== null && formMode !== 'create' && (
-        <HabitForm initialValues={formMode} onSubmit={(input) => handleEdit(formMode, input)} />
+        <HabitForm
+          categories={vm.categories}
+          initialValues={formMode}
+          onSubmit={(input) => handleEdit(formMode, input)}
+        />
       )}
 
       {vm.error && <p className="mb-4 text-red-500 dark:text-red-400 text-sm">{vm.error}</p>}
@@ -59,6 +74,7 @@ export const HabitsPage = observer(function HabitsPage() {
             <HabitCard
               key={habit.id}
               habit={habit}
+              category={habit.categoryId ? (categoryMap.get(habit.categoryId) ?? null) : null}
               onEdit={() => openEdit(habit)}
               onArchive={() => vm.archive(habit.id)}
             />
@@ -72,9 +88,11 @@ export const HabitsPage = observer(function HabitsPage() {
 const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6']
 
 export function HabitForm({
+  categories,
   initialValues,
   onSubmit,
 }: {
+  categories: Category[]
   initialValues?: Habit
   onSubmit: (input: CreateHabitInput) => Promise<void>
 }) {
@@ -85,6 +103,7 @@ export function HabitForm({
     (initialValues?.unit as 'km' | 'minutes' | 'reps') ?? 'reps',
   )
   const [color, setColor] = useState(initialValues?.color ?? COLORS[0])
+  const [categoryId, setCategoryId] = useState<string | null>(initialValues?.categoryId ?? null)
   const [frequencyType, setFrequencyType] = useState<'daily' | 'weekly'>(
     initialValues?.frequency.type ?? 'daily',
   )
@@ -104,7 +123,7 @@ export function HabitForm({
         unit: kind === 'quantitative' ? unit : null,
         goal: null,
         frequency: frequencyType === 'weekly' ? { type: 'weekly', timesPerWeek } : { type: 'daily' },
-        categoryId: null,
+        categoryId,
         color,
       })
     } catch (e) {
@@ -194,6 +213,22 @@ export function HabitForm({
         )}
       </div>
 
+      {categories.length > 0 && (
+        <div>
+          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Categoría</label>
+          <select
+            value={categoryId ?? ''}
+            onChange={(e) => setCategoryId(e.target.value || null)}
+            className={inputCls}
+          >
+            <option value="">Sin categoría</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div>
         <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Color</label>
         <div className="flex gap-2">
@@ -224,10 +259,12 @@ export function HabitForm({
 
 export function HabitCard({
   habit,
+  category,
   onEdit,
   onArchive,
 }: {
   habit: Habit
+  category: Category | null
   onEdit: () => void
   onArchive: () => void
 }) {
@@ -243,9 +280,19 @@ export function HabitCard({
       <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{habit.name}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-500">
-          {habit.kind === 'quantitative' ? `Cuantitativo · ${habit.unit}` : 'Binario'} · {frequencyLabel}
-        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-xs text-slate-500 dark:text-slate-500">
+            {habit.kind === 'quantitative' ? `Cuantitativo · ${habit.unit}` : 'Binario'} · {frequencyLabel}
+          </p>
+          {category && (
+            <span
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+              style={{ backgroundColor: `${category.color}22`, color: category.color }}
+            >
+              {category.name}
+            </span>
+          )}
+        </div>
       </div>
       {confirming ? (
         <div className="flex items-center gap-3">
