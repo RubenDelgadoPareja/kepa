@@ -30,6 +30,15 @@ function IconStats() {
   )
 }
 
+function IconCategories() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+      <line x1="7" y1="7" x2="7.01" y2="7" />
+    </svg>
+  )
+}
+
 function IconSun() {
   return (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -50,6 +59,7 @@ function IconMoon() {
 const NAV_ITEMS = [
   { to: '/today', label: 'Hoy', Icon: IconToday },
   { to: '/habits', label: 'Hábitos', Icon: IconHabits },
+  { to: '/categories', label: 'Categorías', Icon: IconCategories },
   { to: '/stats', label: 'Stats', Icon: IconStats },
 ]
 
