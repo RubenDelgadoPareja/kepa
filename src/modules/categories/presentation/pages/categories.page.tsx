@@ -103,7 +103,7 @@ function CategoryForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-4"
+      className="mb-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-4 animate-slide-down"
     >
       <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-tight">
         {isEdit ? 'Editar categoría' : 'Nueva categoría'}

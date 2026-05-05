@@ -85,7 +85,7 @@ export const HabitsPage = observer(function HabitsPage() {
   )
 })
 
-const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6']
+const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#f97316']
 
 export function HabitForm({
   categories,
@@ -138,7 +138,7 @@ export function HabitForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-4"
+      className="mb-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-4 animate-slide-down"
     >
       <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-tight">
         {isEdit ? 'Editar hábito' : 'Nuevo hábito'}

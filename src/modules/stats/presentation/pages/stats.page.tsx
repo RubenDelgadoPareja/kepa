@@ -5,14 +5,17 @@ import { useViewModel } from '@/core/presentation/hooks/useViewModel'
 import { createStatsDependencies } from '@/modules/stats/stats.wiring'
 import type { Habit } from '@/modules/habits/domain/entities/habit.entity'
 import type { Entry } from '@/modules/tracking/domain/entities/entry.entity'
+import type { Category } from '@/modules/categories/domain/entities/category.entity'
 import type { HabitStats } from '@/modules/stats/domain/use-cases/calculate-habit-stats'
 import { StatsViewModel } from '../view-models/stats.view-model'
 
 export const StatsPage = observer(function StatsPage() {
   const vm = useViewModel(() => {
     const deps = createStatsDependencies()
-    return new StatsViewModel(deps.listHabits, deps.getAllEntries)
+    return new StatsViewModel(deps.listHabits, deps.getAllEntries, deps.listCategories)
   })
+
+  const categoryMap = new Map(vm.categories.map((c) => [c.id, c]))
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8 md:py-12">
@@ -25,7 +28,14 @@ export const StatsPage = observer(function StatsPage() {
       ) : (
         <ul className="space-y-6">
           {vm.items.map(({ habit, entries, stats }) => (
-            <HabitStatCard key={habit.id} habit={habit} entries={entries} stats={stats} today={vm.today} />
+            <HabitStatCard
+              key={habit.id}
+              habit={habit}
+              entries={entries}
+              stats={stats}
+              today={vm.today}
+              category={habit.categoryId ? (categoryMap.get(habit.categoryId) ?? null) : null}
+            />
           ))}
         </ul>
       )}
@@ -38,17 +48,27 @@ export function HabitStatCard({
   entries,
   stats,
   today,
+  category,
 }: {
   habit: Habit
   entries: Entry[]
   stats: HabitStats
   today: string
+  category: Category | null
 }) {
   return (
     <li className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none space-y-5">
       <div className="flex items-center gap-3">
         <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
-        <span className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">{habit.name}</span>
+        <span className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight flex-1">{habit.name}</span>
+        {category && (
+          <span
+            className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: `${category.color}22`, color: category.color }}
+          >
+            {category.name}
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">

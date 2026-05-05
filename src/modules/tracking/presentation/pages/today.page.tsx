@@ -63,34 +63,57 @@ export const TodayPage = observer(function TodayPage() {
       ) : vm.items.length === 0 ? (
         <EmptyState />
       ) : (
-        <>
-          <ul className="mt-5 space-y-3">
-            {vm.items.map(({ habit, entry }) =>
-              habit.kind === 'binary' ? (
-                <BinaryHabitRow
-                  key={habit.id}
-                  habit={habit}
-                  entry={entry}
-                  onToggle={() => vm.toggle(habit)}
-                />
-              ) : (
-                <QuantitativeHabitRow
-                  key={habit.id}
-                  habit={habit}
-                  entry={entry}
-                  onSetValue={(value) => vm.setValue(habit, value)}
-                />
-              ),
-            )}
-          </ul>
-          {vm.completedCount > 0 && vm.completedCount === vm.totalCount && (
-            <AllDoneCard />
-          )}
-        </>
+        <HabitList vm={vm} />
       )}
     </div>
   )
 })
+
+function HabitList({ vm }: { vm: TodayViewModel }) {
+  const pending = vm.items.filter((i) => i.entry === null)
+  const done = vm.items.filter((i) => i.entry !== null)
+
+  function renderRow({ habit, entry }: { habit: Habit; entry: Entry | null }) {
+    return habit.kind === 'binary' ? (
+      <BinaryHabitRow
+        key={habit.id}
+        habit={habit}
+        entry={entry}
+        onToggle={() => vm.toggle(habit)}
+      />
+    ) : (
+      <QuantitativeHabitRow
+        key={habit.id}
+        habit={habit}
+        entry={entry}
+        onSetValue={(value) => vm.setValue(habit, value)}
+      />
+    )
+  }
+
+  return (
+    <div className="mt-5">
+      {pending.length > 0 && (
+        <ul className="space-y-3">{pending.map(renderRow)}</ul>
+      )}
+
+      {done.length > 0 && (
+        <>
+          <div className="flex items-center gap-3 mt-6 mb-3">
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-600 uppercase tracking-wider">
+              Completados
+            </span>
+            <span className="text-xs font-medium text-slate-300 dark:text-slate-700">{done.length}</span>
+            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+          </div>
+          <ul className="space-y-3">{done.map(renderRow)}</ul>
+        </>
+      )}
+
+      {vm.completedCount === vm.totalCount && <AllDoneCard />}
+    </div>
+  )
+}
 
 function DailyQuote() {
   return (
