@@ -45,6 +45,10 @@ export class StatsViewModel extends BaseViewModel {
     await this.load()
   }
 
+  override onFocus(): void {
+    void this.load()
+  }
+
   async load() {
     runInAction(() => { this.isLoading = true })
     try {

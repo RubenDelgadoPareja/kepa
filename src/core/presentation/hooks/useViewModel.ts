@@ -6,7 +6,16 @@ export function useViewModel<T extends BaseViewModel>(factory: () => T): T {
 
   useEffect(() => {
     vm.didMount()
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        vm.onFocus()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       vm.willUnmount()
     }
   }, [vm])

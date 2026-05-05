@@ -54,6 +54,10 @@ export class TodayViewModel extends BaseViewModel {
     await this.load()
   }
 
+  override onFocus(): void {
+    void this.load()
+  }
+
   async load() {
     runInAction(() => { this.isLoading = true })
     try {
