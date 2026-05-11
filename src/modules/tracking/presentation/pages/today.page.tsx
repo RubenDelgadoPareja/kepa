@@ -6,6 +6,7 @@ import { useViewModel } from '@/core/presentation/hooks/useViewModel'
 import { createTrackingDependencies } from '@/modules/tracking/tracking.wiring'
 import type { Habit } from '@/modules/habits/domain/entities/habit.entity'
 import type { Entry } from '@/modules/tracking/domain/entities/entry.entity'
+import type { Category } from '@/modules/categories/domain/entities/category.entity'
 import { TodayViewModel } from '../view-models/today.view-model'
 
 const QUOTES = [
@@ -40,7 +41,7 @@ function getDailyQuote(): string {
 export const TodayPage = observer(function TodayPage() {
   const vm = useViewModel(() => {
     const deps = createTrackingDependencies()
-    return new TodayViewModel(deps.listHabits, deps.getDayEntries, deps.setEntry, deps.clearEntry)
+    return new TodayViewModel(deps.listHabits, deps.getDayEntries, deps.setEntry, deps.clearEntry, deps.listCategories, deps.getAllEntries)
   })
 
   const formattedDate = format(new Date(), "EEEE, d 'de' MMMM", { locale: es })
@@ -73,12 +74,14 @@ function HabitList({ vm }: { vm: TodayViewModel }) {
   const pending = vm.items.filter((i) => i.entry === null)
   const done = vm.items.filter((i) => i.entry !== null)
 
-  function renderRow({ habit, entry }: { habit: Habit; entry: Entry | null }) {
+  function renderRow({ habit, entry, category, streak }: { habit: Habit; entry: Entry | null; category: Category | null; streak: number }) {
     return habit.kind === 'binary' ? (
       <BinaryHabitRow
         key={habit.id}
         habit={habit}
         entry={entry}
+        category={category}
+        streak={streak}
         onToggle={() => vm.toggle(habit)}
       />
     ) : (
@@ -86,6 +89,8 @@ function HabitList({ vm }: { vm: TodayViewModel }) {
         key={habit.id}
         habit={habit}
         entry={entry}
+        category={category}
+        streak={streak}
         onSetValue={(value) => vm.setValue(habit, value)}
       />
     )
@@ -150,10 +155,14 @@ export function ProgressBar({ completed, total }: { completed: number; total: nu
 export function BinaryHabitRow({
   habit,
   entry,
+  category,
+  streak,
   onToggle,
 }: {
   habit: Habit
   entry: Entry | null
+  category: Category | null
+  streak: number
   onToggle: () => void
 }) {
   const done = entry !== null
@@ -180,15 +189,34 @@ export function BinaryHabitRow({
             </svg>
           )}
         </span>
-        <span
-          className={`flex-1 text-sm font-medium text-left transition-colors ${
-            done
-              ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-slate-600'
-              : 'text-slate-900 dark:text-slate-100'
-          }`}
-        >
-          {habit.name}
-        </span>
+        <div className="flex-1 min-w-0 text-left">
+          <span
+            className={`block text-sm font-medium truncate transition-colors ${
+              done
+                ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-slate-600'
+                : 'text-slate-900 dark:text-slate-100'
+            }`}
+          >
+            {habit.name}
+          </span>
+          {(category || streak > 0) && (
+            <div className="flex items-center gap-2 mt-0.5">
+              {category && (
+                <span
+                  className="text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0"
+                  style={{ backgroundColor: `${category.color}22`, color: category.color }}
+                >
+                  {category.name}
+                </span>
+              )}
+              {streak > 0 && (
+                <span className="text-[10px] font-semibold shrink-0" style={{ color: habit.color }}>
+                  {streak}d
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
       </button>
     </li>
@@ -205,10 +233,14 @@ function formatValue(value: number, unit: string | null): string {
 export function QuantitativeHabitRow({
   habit,
   entry,
+  category,
+  streak,
   onSetValue,
 }: {
   habit: Habit
   entry: Entry | null
+  category: Category | null
+  streak: number
   onSetValue: (value: number) => void
 }) {
   const value = typeof entry?.value === 'number' ? entry.value : 0
@@ -224,9 +256,28 @@ export function QuantitativeHabitRow({
       }`}
     >
       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
-      <span className={`flex-1 text-sm font-medium ${done ? 'text-slate-500 dark:text-slate-300' : 'text-slate-900 dark:text-slate-100'}`}>
-        {habit.name}
-      </span>
+      <div className="flex-1 min-w-0">
+        <span className={`block text-sm font-medium truncate ${done ? 'text-slate-500 dark:text-slate-300' : 'text-slate-900 dark:text-slate-100'}`}>
+          {habit.name}
+        </span>
+        {(category || streak > 0) && (
+          <div className="flex items-center gap-2 mt-0.5">
+            {category && (
+              <span
+                className="text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0"
+                style={{ backgroundColor: `${category.color}22`, color: category.color }}
+              >
+                {category.name}
+              </span>
+            )}
+            {streak > 0 && (
+              <span className="text-[10px] font-semibold shrink-0" style={{ color: habit.color }}>
+                {streak}d
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         <button

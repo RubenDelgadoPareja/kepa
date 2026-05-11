@@ -7,6 +7,9 @@ import { EntryRepositoryImpl } from './data/repositories/entry.repository.impl'
 import { ClearEntryUseCase } from './domain/use-cases/clear-entry.use-case'
 import { GetDayEntriesUseCase } from './domain/use-cases/get-day-entries.use-case'
 import { SetEntryUseCase } from './domain/use-cases/set-entry.use-case'
+import { DexieCategoryDataSource } from '@/modules/categories/data/data-sources/dexie-category.data-source'
+import { CategoryRepositoryImpl } from '@/modules/categories/data/repositories/category.repository.impl'
+import { ListCategoriesUseCase } from '@/modules/categories/domain/use-cases/list-categories.use-case'
 
 export function createTrackingDependencies() {
   const entryDataSource = new DexieEntryDataSource(db.entries)
@@ -15,10 +18,15 @@ export function createTrackingDependencies() {
   const habitDataSource = new DexieHabitDataSource(db.habits)
   const habitRepository = new HabitRepositoryImpl(habitDataSource)
 
+  const categoryDataSource = new DexieCategoryDataSource(db.categories)
+  const categoryRepository = new CategoryRepositoryImpl(categoryDataSource)
+
   return {
     listHabits: new ListHabitsUseCase(habitRepository),
     getDayEntries: new GetDayEntriesUseCase(entryRepository),
     setEntry: new SetEntryUseCase(entryRepository),
     clearEntry: new ClearEntryUseCase(entryRepository),
+    listCategories: new ListCategoriesUseCase(categoryRepository),
+    getAllEntries: () => entryRepository.findAll(),
   }
 }
