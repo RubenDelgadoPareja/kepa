@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { ToastContainer } from '@/core/presentation/components/toast-container'
 
 function IconToday() {
   return (
@@ -125,6 +126,8 @@ export function Layout() {
       <main className="pb-20 md:pb-0">
         <Outlet />
       </main>
+
+      <ToastContainer />
 
       {/* Bottom nav — oculta en escritorio */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800">

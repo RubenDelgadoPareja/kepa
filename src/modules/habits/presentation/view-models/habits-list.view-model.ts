@@ -7,6 +7,7 @@ import type { CreateHabitInput, CreateHabitUseCase } from '@/modules/habits/doma
 import type { EditHabitInput, EditHabitUseCase } from '@/modules/habits/domain/use-cases/edit-habit.use-case'
 import type { ListHabitsUseCase } from '@/modules/habits/domain/use-cases/list-habits.use-case'
 import type { ListCategoriesUseCase } from '@/modules/categories/domain/use-cases/list-categories.use-case'
+import { toastStore } from '@/core/presentation/stores/toast.store'
 
 export class HabitsListViewModel extends BaseViewModel {
   habits: Habit[] = []
@@ -75,15 +76,18 @@ export class HabitsListViewModel extends BaseViewModel {
   async create(input: CreateHabitInput) {
     await this.createHabitUseCase.execute(input)
     await this.load()
+    toastStore.show('Hábito creado')
   }
 
   async archive(habitId: string) {
     await this.archiveHabitUseCase.execute(habitId)
     await this.load()
+    toastStore.show('Hábito archivado')
   }
 
   async edit(input: EditHabitInput) {
     await this.editHabitUseCase.execute(input)
     await this.load()
+    toastStore.show('Hábito actualizado')
   }
 }

@@ -5,6 +5,7 @@ import type { CreateCategoryInput, CreateCategoryUseCase } from '@/modules/categ
 import type { EditCategoryUseCase } from '@/modules/categories/domain/use-cases/edit-category.use-case'
 import type { DeleteCategoryUseCase } from '@/modules/categories/domain/use-cases/delete-category.use-case'
 import type { ListCategoriesUseCase } from '@/modules/categories/domain/use-cases/list-categories.use-case'
+import { toastStore } from '@/core/presentation/stores/toast.store'
 
 export class CategoriesViewModel extends BaseViewModel {
   categories: Category[] = []
@@ -64,15 +65,18 @@ export class CategoriesViewModel extends BaseViewModel {
   async create(input: CreateCategoryInput) {
     await this.createCategoryUseCase.execute(input)
     await this.load()
+    toastStore.show('Categoría creada')
   }
 
   async edit(id: string, name: string, color: string) {
     await this.editCategoryUseCase.execute({ id, name, color })
     await this.load()
+    toastStore.show('Categoría actualizada')
   }
 
   async delete(id: string) {
     await this.deleteCategoryUseCase.execute(id)
     await this.load()
+    toastStore.show('Categoría eliminada')
   }
 }
