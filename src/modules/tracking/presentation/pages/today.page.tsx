@@ -74,7 +74,7 @@ function HabitList({ vm }: { vm: TodayViewModel }) {
   const pending = vm.items.filter((i) => i.entry === null)
   const done = vm.items.filter((i) => i.entry !== null)
 
-  function renderRow({ habit, entry, category, streak }: { habit: Habit; entry: Entry | null; category: Category | null; streak: number }) {
+  function renderRow({ habit, entry, category, streak }: { habit: Habit; entry: Entry | null; category: Category | null; streak: number }, index: number) {
     return habit.kind === 'binary' ? (
       <BinaryHabitRow
         key={habit.id}
@@ -82,6 +82,7 @@ function HabitList({ vm }: { vm: TodayViewModel }) {
         entry={entry}
         category={category}
         streak={streak}
+        index={index}
         onToggle={() => vm.toggle(habit)}
       />
     ) : (
@@ -91,6 +92,7 @@ function HabitList({ vm }: { vm: TodayViewModel }) {
         entry={entry}
         category={category}
         streak={streak}
+        index={index}
         onSetValue={(value) => vm.setValue(habit, value)}
       />
     )
@@ -99,7 +101,7 @@ function HabitList({ vm }: { vm: TodayViewModel }) {
   return (
     <div className="mt-5">
       {pending.length > 0 && (
-        <ul className="space-y-3">{pending.map(renderRow)}</ul>
+        <ul className="space-y-3">{pending.map((item, i) => renderRow(item, i))}</ul>
       )}
 
       {done.length > 0 && (
@@ -111,7 +113,7 @@ function HabitList({ vm }: { vm: TodayViewModel }) {
             <span className="text-xs font-medium text-slate-300 dark:text-slate-700">{done.length}</span>
             <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
           </div>
-          <ul className="space-y-3">{done.map(renderRow)}</ul>
+          <ul className="space-y-3">{done.map((item, i) => renderRow(item, i))}</ul>
         </>
       )}
 
@@ -157,18 +159,20 @@ export function BinaryHabitRow({
   entry,
   category,
   streak,
+  index = 0,
   onToggle,
 }: {
   habit: Habit
   entry: Entry | null
   category: Category | null
   streak: number
+  index?: number
   onToggle: () => void
 }) {
   const done = entry !== null
 
   return (
-    <li>
+    <li className="animate-fade-in" style={{ animationDelay: `${index * 35}ms` }}>
       <button
         onClick={onToggle}
         className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl border transition-all ${
@@ -184,7 +188,7 @@ export function BinaryHabitRow({
           style={done ? { backgroundColor: habit.color } : {}}
         >
           {done && (
-            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <svg className="w-3 h-3 text-white animate-pop" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           )}
@@ -235,12 +239,14 @@ export function QuantitativeHabitRow({
   entry,
   category,
   streak,
+  index = 0,
   onSetValue,
 }: {
   habit: Habit
   entry: Entry | null
   category: Category | null
   streak: number
+  index?: number
   onSetValue: (value: number) => void
 }) {
   const value = typeof entry?.value === 'number' ? entry.value : 0
@@ -249,11 +255,12 @@ export function QuantitativeHabitRow({
 
   return (
     <li
-      className={`flex items-center gap-4 px-4 py-4 rounded-2xl border transition-all ${
+      className={`animate-fade-in flex items-center gap-4 px-4 py-4 rounded-2xl border transition-all ${
         done
           ? 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/40'
           : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none'
       }`}
+      style={{ animationDelay: `${index * 35}ms` }}
     >
       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
       <div className="flex-1 min-w-0">

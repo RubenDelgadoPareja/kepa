@@ -70,11 +70,12 @@ export const HabitsPage = observer(function HabitsPage() {
         <EmptyState />
       ) : (
         <ul className="space-y-3">
-          {vm.habits.map((habit) => (
+          {vm.habits.map((habit, i) => (
             <HabitCard
               key={habit.id}
               habit={habit}
               category={habit.categoryId ? (categoryMap.get(habit.categoryId) ?? null) : null}
+              index={i}
               onEdit={() => openEdit(habit)}
               onArchive={() => vm.archive(habit.id)}
             />
@@ -260,11 +261,13 @@ export function HabitForm({
 export function HabitCard({
   habit,
   category,
+  index = 0,
   onEdit,
   onArchive,
 }: {
   habit: Habit
   category: Category | null
+  index?: number
   onEdit: () => void
   onArchive: () => void
 }) {
@@ -276,7 +279,10 @@ export function HabitCard({
       : `${habit.frequency.timesPerWeek}× por semana`
 
   return (
-    <li className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none">
+    <li
+      className="animate-fade-in flex items-center gap-4 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none"
+      style={{ animationDelay: `${index * 35}ms` }}
+    >
       <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{habit.name}</p>

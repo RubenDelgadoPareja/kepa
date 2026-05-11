@@ -27,7 +27,7 @@ export const StatsPage = observer(function StatsPage() {
         <p className="text-slate-500 dark:text-slate-500 text-sm">Crea hábitos y empieza a registrar para ver estadísticas.</p>
       ) : (
         <ul className="space-y-6">
-          {vm.items.map(({ habit, entries, stats }) => (
+          {vm.items.map(({ habit, entries, stats }, i) => (
             <HabitStatCard
               key={habit.id}
               habit={habit}
@@ -35,6 +35,7 @@ export const StatsPage = observer(function StatsPage() {
               stats={stats}
               today={vm.today}
               category={habit.categoryId ? (categoryMap.get(habit.categoryId) ?? null) : null}
+              index={i}
             />
           ))}
         </ul>
@@ -49,15 +50,20 @@ export function HabitStatCard({
   stats,
   today,
   category,
+  index = 0,
 }: {
   habit: Habit
   entries: Entry[]
   stats: HabitStats
   today: string
   category: Category | null
+  index?: number
 }) {
   return (
-    <li className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none space-y-5">
+    <li
+      className="animate-fade-in p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none space-y-5"
+      style={{ animationDelay: `${index * 35}ms` }}
+    >
       <div className="flex items-center gap-3">
         <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
         <span className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight flex-1">{habit.name}</span>

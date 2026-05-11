@@ -56,10 +56,11 @@ export const CategoriesPage = observer(function CategoriesPage() {
         <EmptyState />
       ) : (
         <ul className="space-y-3">
-          {vm.categories.map((category) => (
+          {vm.categories.map((category, i) => (
             <CategoryCard
               key={category.id}
               category={category}
+              index={i}
               onEdit={() => openEdit(category)}
               onDelete={() => vm.delete(category.id)}
             />
@@ -150,17 +151,22 @@ function CategoryForm({
 
 function CategoryCard({
   category,
+  index = 0,
   onEdit,
   onDelete,
 }: {
   category: Category
+  index?: number
   onEdit: () => void
   onDelete: () => void
 }) {
   const [confirming, setConfirming] = useState(false)
 
   return (
-    <li className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none">
+    <li
+      className="animate-fade-in flex items-center gap-4 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none"
+      style={{ animationDelay: `${index * 35}ms` }}
+    >
       <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: category.color }} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{category.name}</p>
